@@ -64,13 +64,7 @@ lifegame -f examples/big-ship.txt
 Loads the board from the file 'big-ship.txt'
 
 # Project structure
-```mermaid
-graph LR
-A[file.c] --> B(file.h)
-C[display.c] --> D(display.h)
-B --> E[main.c]
-D --> E
-```
+
 The project contains 3 main files
 
 ## main.c
