@@ -86,6 +86,6 @@ The project contains an 'example' folder which contains a list of example files.
 Those are some examples of known structures in the Conway's Game of Life. They can be given to the program with the `-f` parameter
 
 # Copyright
-This project was made by Joël von der Weid, a student in HEPIA engineering school.
-This project is under the GPL License
+This project was made by Joël von der Weid.
+This project is under the MIT license. See [LICENSE](LICENSE) file for more information.
 
