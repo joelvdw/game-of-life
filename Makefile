@@ -30,7 +30,7 @@ all: main.o display.o file.o
 main.o: main.c display.h file.h
 	$(CC) $(CFLAGS) -c $<
 
-display.o: display.c
+display.o: display.c math.h
 	$(CC) $(CFLAGS) -c $< -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT 
 
 file.o: file.c file.h

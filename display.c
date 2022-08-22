@@ -32,15 +32,20 @@ SOFTWARE.
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include "display.h"
+#include "math.h"
 
 #define TEXT_MARGIN 18
 #define LINE_MARGIN 28
 #define TEXT_SIZE 200
 #define BTN_HEIGHT 40
+#define CELL_MAX_SIZE 30
+#define CELL_MIN_SIZE 2
+#define WINDOW_MIN_SIZE 300
 #define BORDER 2
 #define MARGIN 1
 #define PALETTE_SIZE 256
 #define CURSOR_SIZE 0
+#define HEADER_SIZE 150
    
 SDL_Surface *screen = NULL;
 int cellSize = 0;
@@ -96,7 +101,7 @@ void initVariables() {
 
     fontS = TTF_OpenFont("arial.ttf", 23);
     fontM = TTF_OpenFont("arial.ttf", 27);
-    fontL = TTF_OpenFont("arial.ttf", 35);
+    fontL = TTF_OpenFont("arial.ttf", 30);
 
     backColor = SDL_MapRGB(screen->format, 200, 200, 200);
     cellColor = SDL_MapRGB(screen->format, 20, 20, 20);
@@ -109,32 +114,26 @@ void initVariables() {
  * Choose the optimal cell size depending on the board size
  */
 void setCellSize(int size) {
-    if (size <= 55) {
-        cellSize = 30;
-    } else if (size <= 63) {
-        cellSize = 25;
-    } else if (size <= 81) {
-        cellSize = 20;
-    } else if (size <= 103) {
-        cellSize = 15;
-    } else if (size <= 150) {
-        cellSize = 10;
-    } else {
-        cellSize = 5;
-    }
+    const SDL_VideoInfo* info = SDL_GetVideoInfo();
+    int width = info->current_w;
+    int height = info->current_h;
+    int mins = min(height - HEADER_SIZE, width);
+
+    cellSize = min(max(mins / size, CELL_MIN_SIZE), CELL_MAX_SIZE);
 }
 
 /**
  * Initialize the display window
  */
 void initScreen(int size) {
-    setCellSize(size);
-
     // Create screen
     SDL_Init(SDL_INIT_VIDEO);
+    setCellSize(size);
+
     screenSize = size * (cellSize + MARGIN) + MARGIN;
-    screen = SDL_SetVideoMode(screenSize + TEXT_SIZE, screenSize, 8, SDL_HWSURFACE | SDL_DOUBLEBUF);
-    SDL_WM_SetCaption("Le jeu de la vie", NULL);
+    int windowHeight = max(screenSize, WINDOW_MIN_SIZE);
+    screen = SDL_SetVideoMode(screenSize + TEXT_SIZE, windowHeight, 8, SDL_HWSURFACE | SDL_DOUBLEBUF);
+    SDL_WM_SetCaption("Game of Life", NULL);
 
     if(TTF_Init() == -1)
     {
@@ -152,11 +151,11 @@ void initScreen(int size) {
     rect.x = screenSize;
     rect.y = 0;
     rect.w = TEXT_SIZE;
-    rect.h = screenSize;
+    rect.h = windowHeight;
     SDL_FillRect(screen, &rect, backColor);
 
     rect.x = screenSize + TEXT_MARGIN;
-    rect.y = screenSize - TEXT_MARGIN - BTN_HEIGHT;
+    rect.y = windowHeight - TEXT_MARGIN - BTN_HEIGHT;
     rect.w = TEXT_SIZE - 2*TEXT_MARGIN;
     rect.h = BTN_HEIGHT;
     btnRect = rect;
@@ -177,7 +176,7 @@ void initScreen(int size) {
     SDL_BlitSurface(text1, NULL, screen, &rect);
     rect.y += 3 * LINE_MARGIN;
 
-    SDL_Surface* text2 = TTF_RenderText_Solid(fontS, "Vitesse", colors[75]);
+    SDL_Surface* text2 = TTF_RenderText_Solid(fontS, "Delay", colors[75]);
     SDL_BlitSurface(text2, NULL, screen, &rect);
 
     SDL_FreeSurface(text);
@@ -222,6 +221,7 @@ void updateTexts(int running, int wait, int generation) {
     SDL_FillRect(screen, &rect, backColor);
 
     rect.y += 3 * LINE_MARGIN;
+    rect.h = 4 * LINE_MARGIN;
     SDL_FillRect(screen, &rect, backColor);
 
     SDL_Rect position;
@@ -237,7 +237,7 @@ void updateTexts(int running, int wait, int generation) {
     sprintf(str, "%dms", wait);
     SDL_Surface* text1 = TTF_RenderText_Solid(fontM, str, colors[0]);
     SDL_BlitSurface(text1, NULL, screen, &position);
-    position.y += 3 * LINE_MARGIN;
+    position.y += 2 * LINE_MARGIN;
 
     if (!running) {
         SDL_Surface* text2 = TTF_RenderText_Solid(fontL, "PAUSE", colors[100]);
