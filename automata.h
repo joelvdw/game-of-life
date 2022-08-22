@@ -31,6 +31,6 @@ SOFTWARE.
 #ifndef _AUTOMATA_H_
 #define _AUTOMATA_H_
 
-void calculateState(char** state, char** newState, int size);
+void calculateState(char* state, char* newState, int size);
 
 #endif

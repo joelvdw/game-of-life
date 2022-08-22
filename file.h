@@ -33,22 +33,26 @@ SOFTWARE.
 
 #define DEFAULT_SIZE 20
 
-/**
- * Alocate memory for a 2d array
- */
-char** allocArray(int size);
-/**
- * Free memory of a 2d array
- */
-void freeArray(char** array, int size);
 /*
- * Generate the board from the given file
- * Board max size can be given, 0 to doesn't set it
+ * Return the corresponding index in the flattened 2d-array
  */
-char** getBoard(char* filename, int* size);
+int idx(int i, int j, int size);
+/*
+ * Alocate memory for a flat 2d-array of size (size x size)
+ */
+char* allocArray(int size);
+/*
+ * Free memory of a flat 2d-array
+ */
+void freeArray(char* array);
+/*
+ * Generate the board with the given file
+ * Board size can be given, 0 to doesn't set it
+ */
+char* getBoard(char* filename, int* size);
 /**
  * Save a board to a file
  */
-void saveBoard(char** board, int size);
+void saveBoard(char* board, int size);
 
 #endif

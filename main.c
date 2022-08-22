@@ -52,10 +52,10 @@ void errorExit(char* msg) {
  * Randomly generate a part of a board
  * Range to generate : (initI -> initI+size; initJ -> initJ+size)
  */
-void randomBoardPart(char** board, int initI, int initJ, int size) {
-    for (int i = initI; i < initI+size; i++) {
-        for (int j = initJ; j < initJ+size; j++) {
-            board[i][j] = rand()%2;
+void randomBoardPart(char* board, int initI, int initJ, int partSize, int boardSize) {
+    for (int i = initI; i < initI+partSize; i++) {
+        for (int j = initJ; j < initJ+partSize; j++) {
+            board[idx(i, j, boardSize)] = rand()%2;
         }
     }
 }
@@ -63,13 +63,13 @@ void randomBoardPart(char** board, int initI, int initJ, int size) {
 /**
  * Apply a vertical or horizontal symmetry on the middle of the board
  */
-void symmetryBoardPart(char** board, int size, int vertical) {
+void symmetryBoardPart(char* board, int size, int vertical) {
     for (int i = 0; i < (vertical ? size/2 : size); i++) {
         int nI =  (vertical ? size - i - 1 : i);
         for (int j = 0; j < (vertical ? size : size/2); j++) {
             int nJ =  (vertical ? j : size - j - 1);
 
-            board[nI][nJ] = board[i][j];
+            board[idx(nI, nJ, size)] = board[idx(i, j, size)];
         }
     }
 }
@@ -78,16 +78,16 @@ void symmetryBoardPart(char** board, int size, int vertical) {
  * Fill the board with random values
  * rdmType : 1->full random, 2->vertical symm, 3->horizontal symm, 4->both symm
  */
-void randomBoard(char** board, int size, int rdmType) {
+void randomBoard(char* board, int size, int rdmType) {
     if (rdmType == 1) {
-        randomBoardPart(board, 0, 0, size);
+        randomBoardPart(board, 0, 0, size, size);
     } else {
-        randomBoardPart(board, 0, 0, size/2 + size%2);
+        randomBoardPart(board, 0, 0, size/2 + size%2, size);
         if (rdmType == 2) {
-            randomBoardPart(board, 0, size/2+size%2, size/2);
+            randomBoardPart(board, 0, size/2+size%2, size/2, size);
             symmetryBoardPart(board, size, 1);
         } else if (rdmType == 3) {
-            randomBoardPart(board, size/2+size%2, 0, size/2);
+            randomBoardPart(board, size/2+size%2, 0, size/2, size);
             symmetryBoardPart(board, size, 0);
         } else {
             symmetryBoardPart(board, size, 1);
@@ -149,12 +149,12 @@ void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
 /*
  * Calculate next board state
  */
-char** nextState(char** board, int size) {
-    char** nBoard = allocArray(size);
+char* nextState(char* board, int size) {
+    char* nBoard = allocArray(size);
 
     calculateState(board, nBoard, size);
 
-    freeArray(board, size);
+    freeArray(board);
     return nBoard;
 }
 
@@ -168,7 +168,7 @@ int main(int argc, char** argv) {
     manageArguments(argc, argv, &size, &file, &random);
 
     // Create board
-    char** board = getBoard(file, &size);
+    char* board = getBoard(file, &size);
     initScreen(size);
     if (random > 0) {
         randomBoard(board, size, random);
@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
                         // -2 is button pressed
                         saveBoard(board, size);
                     } else if (p.i > -1) {
-                        board[p.i][p.j] = !board[p.i][p.j];
+                        board[idx(p.i, p.j, size)] = !board[idx(p.i, p.j, size)];
                     }
                     updateScreen(board, size);
                     updateTexts(running, wait, generation);
@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
     }
 
     // Free all memory
-    freeArray(board, size);
+    freeArray(board);
     closeScreen();
 
     exit(EXIT_SUCCESS);

@@ -24,22 +24,26 @@ CC=gcc -std=c11
 CFLAGS=-Wall -Wextra
 EXEC=lifegame
 
-all: main.o display.o file.o
+all: main.o display.o file.o automata.o
 	$(CC) -o $(EXEC) $^ -lSDL -lSDLmain -lSDL_ttf
 
-main.o: main.c display.h file.h
+main.o: main.c display.h file.h automata.h
 	$(CC) $(CFLAGS) -c $<
 
-display.o: display.c math.h
+display.o: display.c display.h math.h file.h
 	$(CC) $(CFLAGS) -c $< -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT 
 
 file.o: file.c file.h
 	$(CC) $(CFLAGS) -c $<
 
+automata.o: automata.c automata.h file.h
+	$(CC) $(CFLAGS) -c $<
+
+
 .PHONY: clean mrproper all
 
 clean:	
-	rm -f *.o lifegame
+	rm -f *.o $(EXEC)
 
 mrproper: clean
 	rm -fr $(EXEC)

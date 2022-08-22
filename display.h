@@ -48,7 +48,7 @@ void initScreen(int size);
 /**
  * Update the screen with the current game state
  */
-void updateScreen(char** board, int size);
+void updateScreen(char* board, int size);
 /**
  * Update the texts in the window
  */

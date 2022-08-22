@@ -38,31 +38,26 @@ SOFTWARE.
 #define MIN_SIZE 3
 
 /*
- * Alocate memory for a 2d array
+ * Return the corresponding index in the flattened 2d-array
  */
-char** allocArray(int size) {
-    char** array = malloc(sizeof(char*) * size);
+int idx(int i, int j, int size) {
+    return (i*size) + j;
+}
+
+/*
+ * Alocate memory for a flat 2d-array of size (size x size)
+ */
+char* allocArray(int size) {
+    char* array = calloc(sizeof(char), size * size);
     assert(array != NULL);
-    for (int i = 0; i < size; i++) {
-        array[i] = malloc(sizeof(char) * size);
-        assert(array[i] != NULL);
-
-        for (int j = 0; j < size; j++) {
-            array[i][j] = 0;
-        }
-    }
-
+    
     return array;
 }
 
 /*
- * Free memory of a 2d array
+ * Free memory of a flat 2d-array
  */
-void freeArray(char** array, int size) {
-    for (int i = 0; i < size; i++) {
-        free(array[i]);
-    }
-
+void freeArray(char* array) {
     free(array);
 }
 
@@ -70,8 +65,8 @@ void freeArray(char** array, int size) {
  * Generate the board with the given file
  * Board size can be given, 0 to doesn't set it
  */
-char** getBoard(char* filename, int* size) {
-    char** board;
+char* getBoard(char* filename, int* size) {
+    char* board;
 
     if (strcmp(filename, "")) {
         FILE* file = fopen(filename, "r");
@@ -104,9 +99,9 @@ char** getBoard(char* filename, int* size) {
                 }
             } else if (j < *size) {
                 if (c == '0') {
-                    board[i][j] = 0;
+                    board[idx(i, j, *size)] = 0;
                 } else {
-                    board[i][j] = 1;
+                    board[idx(i, j, *size)] = 1;
                 }
 
                 j += 1;
@@ -127,7 +122,7 @@ char** getBoard(char* filename, int* size) {
 /**
  * Save a board to a file
  */
-void saveBoard(char** board, int size) {
+void saveBoard(char* board, int size) {
     // Get formatted time for the filename
     time_t now;
     char buffer[29];
@@ -141,11 +136,11 @@ void saveBoard(char** board, int size) {
     assert(file != NULL);
 
     fprintf(file, "%d\n", size);
-    for(int i = 0; i < size; i++) {
-        for(int j = 0; j < size; j++) {
-            fprintf(file, "%d", board[i][j]);
+    for(int i = 0; i < (size*size); i++) {
+        fprintf(file, "%d", board[i]);
+        if (i % size == (size-1)) {
+            fprintf(file, "\n");
         }
-        fprintf(file, "\n");
     }
 
     fclose(file);
