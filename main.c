@@ -34,7 +34,7 @@ SOFTWARE.
 #include <time.h>
 #include <SDL/SDL.h>
 #include "display.h"
-#include "file.h"
+#include "board.h"
 #include "automata.h"
 
 #define MAIN_WAIT 10
@@ -52,10 +52,10 @@ void errorExit(char* msg) {
  * Randomly generate a part of a board
  * Range to generate : (initI -> initI+size; initJ -> initJ+size)
  */
-void randomBoardPart(char* board, int initI, int initJ, int partSize, int boardSize) {
+void randomBoardPart(board_t board, int initI, int initJ, int partSize) {
     for (int i = initI; i < initI+partSize; i++) {
         for (int j = initJ; j < initJ+partSize; j++) {
-            board[idx(i, j, boardSize)] = rand()%2;
+            board.data[idx(i, j, board.size)] = rand()%2;
         }
     }
 }
@@ -63,13 +63,13 @@ void randomBoardPart(char* board, int initI, int initJ, int partSize, int boardS
 /**
  * Apply a vertical or horizontal symmetry on the middle of the board
  */
-void symmetryBoardPart(char* board, int size, int vertical) {
-    for (int i = 0; i < (vertical ? size/2 : size); i++) {
-        int nI =  (vertical ? size - i - 1 : i);
-        for (int j = 0; j < (vertical ? size : size/2); j++) {
-            int nJ =  (vertical ? j : size - j - 1);
+void symmetryBoardPart(board_t board, int vertical) {
+    for (int i = 0; i < (vertical ? board.size/2 : board.size); i++) {
+        int nI =  (vertical ? board.size - i - 1 : i);
+        for (int j = 0; j < (vertical ? board.size : board.size/2); j++) {
+            int nJ =  (vertical ? j : board.size - j - 1);
 
-            board[idx(nI, nJ, size)] = board[idx(i, j, size)];
+            board.data[idx(nI, nJ, board.size)] = board.data[idx(i, j, board.size)];
         }
     }
 }
@@ -78,20 +78,21 @@ void symmetryBoardPart(char* board, int size, int vertical) {
  * Fill the board with random values
  * rdmType : 1->full random, 2->vertical symm, 3->horizontal symm, 4->both symm
  */
-void randomBoard(char* board, int size, int rdmType) {
+void randomBoard(board_t board, int rdmType) {
+    int size = board.size;
     if (rdmType == 1) {
-        randomBoardPart(board, 0, 0, size, size);
+        randomBoardPart(board, 0, 0, size);
     } else {
-        randomBoardPart(board, 0, 0, size/2 + size%2, size);
+        randomBoardPart(board, 0, 0, size/2 + size%2);
         if (rdmType == 2) {
-            randomBoardPart(board, 0, size/2+size%2, size/2, size);
-            symmetryBoardPart(board, size, 1);
+            randomBoardPart(board, 0, size/2+size%2, size/2);
+            symmetryBoardPart(board, 1);
         } else if (rdmType == 3) {
-            randomBoardPart(board, size/2+size%2, 0, size/2, size);
-            symmetryBoardPart(board, size, 0);
+            randomBoardPart(board, size/2+size%2, 0, size/2);
+            symmetryBoardPart(board, 0);
         } else {
-            symmetryBoardPart(board, size, 1);
-            symmetryBoardPart(board, size, 0);
+            symmetryBoardPart(board, 1);
+            symmetryBoardPart(board, 0);
         }
     }
 }
@@ -149,10 +150,10 @@ void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
 /*
  * Calculate next board state
  */
-char* nextState(char* board, int size) {
-    char* nBoard = allocArray(size);
+board_t nextState(board_t board, int size) {
+    board_t nBoard = allocArray(size);
 
-    calculateState(board, nBoard, size);
+    calculateState(board, nBoard);
 
     freeArray(board);
     return nBoard;
@@ -168,10 +169,10 @@ int main(int argc, char** argv) {
     manageArguments(argc, argv, &size, &file, &random);
 
     // Create board
-    char* board = getBoard(file, &size);
+    board_t board = getBoard(file, &size);
     initScreen(size);
     if (random > 0) {
-        randomBoard(board, size, random);
+        randomBoard(board, random);
     }
     
     // Main loop
@@ -184,7 +185,7 @@ int main(int argc, char** argv) {
     int mouseDown = 0;
     int keyDown = 0;
 
-    updateScreen(board, size);
+    updateScreen(board);
     updateTexts(running, wait, generation);
 
     while (!quit) {
@@ -203,9 +204,9 @@ int main(int argc, char** argv) {
                         // -2 is button pressed
                         saveBoard(board, size);
                     } else if (p.i > -1) {
-                        board[idx(p.i, p.j, size)] = !board[idx(p.i, p.j, size)];
+                        board.data[idx(p.i, p.j, size)] = !board.data[idx(p.i, p.j, size)];
                     }
-                    updateScreen(board, size);
+                    updateScreen(board);
                     updateTexts(running, wait, generation);
 
                     mouseDown = 1;
@@ -237,7 +238,7 @@ int main(int argc, char** argv) {
                             if (!running) {
                                 board = nextState(board, size);
                                 generation += 1;
-                                updateScreen(board, size);
+                                updateScreen(board);
                                 updateTexts(running, wait, generation);
                             }
                             break;
@@ -257,7 +258,7 @@ int main(int argc, char** argv) {
         if (running && elapsed >= wait && !quit) {
             board = nextState(board, size);
             generation += 1;
-            updateScreen(board, size);
+            updateScreen(board);
             updateTexts(running, wait, generation);
 
             elapsed = 0;

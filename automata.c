@@ -28,35 +28,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "file.h"
+#include "board.h"
 
 /**
  * Calculate the next state of the life game
  * Rules : 3 -> born, 2-3 -> survive, else -> die
  */
-void calculateState(char* state, char* newState, int size) {
+void calculateState(board_t state, board_t newState) {
+    int size = state.size;
     int i;
     for (i = 0; i < size; i++) {
         int c1 = 0, c2 = 0;
-        int c3 = (i > 0 ? state[idx(i-1, 0, size)] : 0) + state[idx(i, 0, size)] + (i+1 < size ? state[idx(i+1, 0, size)] : 0);
+        int c3 = (i > 0 ? state.data[idx(i-1, 0, size)] : 0) + state.data[idx(i, 0, size)] + (i+1 < size ? state.data[idx(i+1, 0, size)] : 0);
 
         for (int j = 0; j < size; j++) {
-            c2 = c3 - state[idx(i, j, size)];
+            c2 = c3 - state.data[idx(i, j, size)];
             c3 = 0;
             if (j+1 < size) {
                 for (int k = (i-1 > 0 ? i-1 : 0); k < (i+2 < size ? i+2 : size); k++) {
-                    c3 += state[idx(k, j+1, size)];
+                    c3 += state.data[idx(k, j+1, size)];
                 }
             }
 
             int nbrCell = c1 + c2 + c3;
-            if (nbrCell == 3 || (state[idx(i, j, size)] == 1 && nbrCell == 2)) {
-                newState[idx(i, j, size)] = 1;
+            if (nbrCell == 3 || (state.data[idx(i, j, size)] == 1 && nbrCell == 2)) {
+                newState.data[idx(i, j, size)] = 1;
             } else {
-                newState[idx(i, j, size)] = 0;
+                newState.data[idx(i, j, size)] = 0;
             }
 
-            c1 = c2 + state[idx(i, j, size)];
+            c1 = c2 + state.data[idx(i, j, size)];
         }
     }
 }

@@ -33,7 +33,7 @@ SOFTWARE.
 #include <assert.h>
 #include <string.h>
 #include <time.h>
-#include "file.h"
+#include "board.h"
 
 #define MIN_SIZE 3
 
@@ -45,28 +45,30 @@ int idx(int i, int j, int size) {
 }
 
 /*
- * Alocate memory for a flat 2d-array of size (size x size)
+ * Alocate memory for a board of size (size x size)
  */
-char* allocArray(int size) {
-    char* array = calloc(sizeof(char), size * size);
-    assert(array != NULL);
+board_t allocArray(int size) {
+    board_t board;
+    board.size = size;
+    board.data = calloc(sizeof(char), size * size);
+    assert(board.data != NULL);
     
-    return array;
+    return board;
 }
 
 /*
- * Free memory of a flat 2d-array
+ * Free memory of a board
  */
-void freeArray(char* array) {
-    free(array);
+void freeArray(board_t array) {
+    free(array.data);
 }
 
 /*
  * Generate the board with the given file
  * Board size can be given, 0 to doesn't set it
  */
-char* getBoard(char* filename, int* size) {
-    char* board;
+board_t getBoard(char* filename, int* size) {
+    board_t board;
 
     if (strcmp(filename, "")) {
         FILE* file = fopen(filename, "r");
@@ -99,9 +101,9 @@ char* getBoard(char* filename, int* size) {
                 }
             } else if (j < *size) {
                 if (c == '0') {
-                    board[idx(i, j, *size)] = 0;
+                    board.data[idx(i, j, *size)] = 0;
                 } else {
-                    board[idx(i, j, *size)] = 1;
+                    board.data[idx(i, j, *size)] = 1;
                 }
 
                 j += 1;
@@ -122,7 +124,7 @@ char* getBoard(char* filename, int* size) {
 /**
  * Save a board to a file
  */
-void saveBoard(char* board, int size) {
+void saveBoard(board_t board, int size) {
     // Get formatted time for the filename
     time_t now;
     char buffer[29];
@@ -137,7 +139,7 @@ void saveBoard(char* board, int size) {
 
     fprintf(file, "%d\n", size);
     for(int i = 0; i < (size*size); i++) {
-        fprintf(file, "%d", board[i]);
+        fprintf(file, "%d", board.data[i]);
         if (i % size == (size-1)) {
             fprintf(file, "\n");
         }

@@ -31,6 +31,8 @@ SOFTWARE.
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
+#include "board.h"
+
 typedef struct Point {
     int i;
     int j;
@@ -48,7 +50,7 @@ void initScreen(int size);
 /**
  * Update the screen with the current game state
  */
-void updateScreen(char* board, int size);
+void updateScreen(board_t board);
 /**
  * Update the texts in the window
  */

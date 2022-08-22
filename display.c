@@ -32,7 +32,7 @@ SOFTWARE.
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include "display.h"
-#include "file.h"
+#include "board.h"
 #include "math.h"
 
 #define TEXT_MARGIN 18
@@ -188,16 +188,16 @@ void initScreen(int size) {
 /**
  * Update the screen with the current game state
  */
-void updateScreen(char* board, int size) {
+void updateScreen(board_t board) {
     SDL_Rect position;
     position.x = MARGIN;
     position.y = MARGIN;
     
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
+    for (int i = 0; i < board.size; i++) {
+        for (int j = 0; j < board.size; j++) {
             SDL_Surface* cell = SDL_CreateRGBSurface(SDL_HWSURFACE, cellSize, cellSize, 8, 0, 0, 0, 0);
             SDL_SetPalette(cell, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, PALETTE_SIZE);
-            SDL_FillRect(cell, NULL, (board[idx(i, j, size)] == 0 ? emptyColor: cellColor));
+            SDL_FillRect(cell, NULL, (board.data[idx(i, j, board.size)] == 0 ? emptyColor: cellColor));
             SDL_BlitSurface(cell, NULL, screen, &position);
 
             SDL_FreeSurface(cell);

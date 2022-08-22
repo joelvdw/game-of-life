@@ -33,6 +33,11 @@ SOFTWARE.
 
 #define DEFAULT_SIZE 20
 
+typedef struct board_struct {
+    char* data;
+    int size;
+} board_t;
+
 /*
  * Return the corresponding index in the flattened 2d-array
  */
@@ -40,19 +45,19 @@ int idx(int i, int j, int size);
 /*
  * Alocate memory for a flat 2d-array of size (size x size)
  */
-char* allocArray(int size);
+board_t allocArray(int size);
 /*
  * Free memory of a flat 2d-array
  */
-void freeArray(char* array);
+void freeArray(board_t array);
 /*
  * Generate the board with the given file
  * Board size can be given, 0 to doesn't set it
  */
-char* getBoard(char* filename, int* size);
+board_t getBoard(char* filename, int* size);
 /**
  * Save a board to a file
  */
-void saveBoard(char* board, int size);
+void saveBoard(board_t board, int size);
 
 #endif
