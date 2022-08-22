@@ -1,13 +1,13 @@
 /*
  * Title    : Game of life
  * Desc     : C implementation of the Conway's Game of Life cellular automaton
- * Author   : Joël von der Weid - HEPIA ITI
- * Date     : December 2018
- * Version  : 0.2
+ * Author   : Joël von der Weid - HEPIA ISC
+ * Date     : August 2022
+ * Version  : 0.5
   
 MIT License
 
-Copyright (c) 2018-2019 VON DER WEID Joël
+Copyright (c) 2018-2022 VON DER WEID Joël
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
- */
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,6 +35,7 @@ SOFTWARE.
 #include <SDL/SDL.h>
 #include "display.h"
 #include "file.h"
+#include "automata.h"
 
 #define MAIN_WAIT 10
 #define MIN_GEN_WAIT 16
@@ -145,36 +146,13 @@ void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
     }
 }
 
-/**
- * Apply the next state of the life game
- * Rules : 3 -> born, 2-3 -> survive, >3 -> die
+/*
+ * Calculate next board state
  */
 char** nextState(char** board, int size) {
     char** nBoard = allocArray(size);
 
-    for (int i = 0; i < size; i++) {
-        int c1 = 0, c2 = 0;
-        int c3 = (i > 0 ? board[i-1][0] : 0) + board[i][0] + (i+1 < size ? board[i+1][0] : 0);
-
-        for (int j = 0; j < size; j++) {
-            c2 = c3 - board[i][j];
-            c3 = 0;
-            if (j+1 < size) {
-                for (int k = (i-1 > 0 ? i-1 : 0); k < (i+2 < size ? i+2 : size); k++) {
-                    c3 += board[k][j+1];
-                }
-            }
-
-            int nbrCell = c1 + c2 + c3;
-            if (nbrCell == 3 || (board[i][j] == 1 && nbrCell == 2)) {
-                nBoard[i][j] = 1;
-            } else {
-                nBoard[i][j] = 0;
-            }
-
-            c1 = c2 + board[i][j];
-        }
-    }
+    calculateState(board, nBoard, size);
 
     freeArray(board, size);
     return nBoard;

@@ -1,13 +1,13 @@
 /*
  * Title    : Game of life / display
  * Desc     : Headers for display management for the Game of Life
- * Author   : Joël von der Weid - HEPIA ITI
- * Date     : December 2018
- * Version  : 0.2
- 
+ * Author   : Joël von der Weid - HEPIA ISC
+ * Date     : August 2022
+ * Version  : 0.5
+  
 MIT License
 
-Copyright (c) 2018-2019 VON DER WEID Joël
+Copyright (c) 2018-2022 VON DER WEID Joël
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
