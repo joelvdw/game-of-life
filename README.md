@@ -7,7 +7,7 @@ The program was made in the C language, using the SDL Graphic library.
 The following packages are required to execute the game :  `libsdl-dev`, `libsdl-ttf2.0-dev`
 
 ```
-sudo apt install libsdl-dev libsdl-ttf2.0-dev
+sudo apt install libsdl1.2-dev libsdl-ttf2.0-dev
 ```
 
 To generate the executable file 'lifegame' use :
