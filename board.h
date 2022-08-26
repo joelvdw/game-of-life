@@ -33,7 +33,7 @@ SOFTWARE.
 
 #define DEFAULT_SIZE 20
 
-typedef struct board_struct {
+typedef struct board {
     char* data;
     int size;
 } board_t;
