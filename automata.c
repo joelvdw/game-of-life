@@ -29,15 +29,37 @@ SOFTWARE.
 */
 
 #include "board.h"
+#include "omp.h"
 
-/**
- * Calculate the next state of the life game
- * Rules : 3 -> born, 2-3 -> survive, else -> die
- */
-void calculateState(board_t state, board_t newState) {
-    int size = state.size;
+#define USE_OMP 1
+
+void increase(board_t board, int i, int* sum) {
+    if (i >= 0 && i < (board.size*board.size)) {
+        *sum += board.data[i];
+    }
+}
+
+void calculateStateOMP(board_t state, board_t newState) {
     int i;
-    for (i = 0; i < size; i++) {
+    #pragma omp parallel for
+    for (i = 0; i < (state.size*state.size); ++i) {
+        int sum = 0;
+        increase(state, i-1, &sum);
+        increase(state, i+1, &sum);
+        for (int ii = i-state.size-1; ii <= (i-state.size+1); ++ii) { increase(state, ii, &sum); }
+        for (int ii = i+state.size-1; ii <= (i+state.size+1); ++ii) { increase(state, ii, &sum); }
+
+        if (sum == 3 || (state.data[i] == 1 && sum == 2)) {
+            newState.data[i] = 1;
+        } else {
+            newState.data[i] = 0;
+        }
+    }
+}
+
+void calculateStateSeq(board_t state, board_t newState) {
+    int size = state.size;
+    for (int i = 0; i < size; i++) {
         int c1 = 0, c2 = 0;
         int c3 = (i > 0 ? state.data[idx(i-1, 0, size)] : 0) + state.data[idx(i, 0, size)] + (i+1 < size ? state.data[idx(i+1, 0, size)] : 0);
 
@@ -60,4 +82,16 @@ void calculateState(board_t state, board_t newState) {
             c1 = c2 + state.data[idx(i, j, size)];
         }
     }
+}
+
+/**
+ * Calculate the next state of the life game
+ * Rules : 3 -> born, 2-3 -> survive, else -> die
+ */
+void calculateState(board_t state, board_t newState) {
+    #if defined(_OPENMP) && USE_OMP == 1
+        calculateStateOMP(state, newState);
+    #else
+        calculateStateSeq(state, newState);
+    #endif
 }
