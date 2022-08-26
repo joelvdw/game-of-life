@@ -40,6 +40,12 @@ SOFTWARE.
 #define MAIN_WAIT 10
 #define MIN_GEN_WAIT 16
 
+typedef struct game_state {
+    board_t currBoard;
+    board_t nextBoard;
+    int generation;
+} game_state_t;
+
 /**
  * Print an error and exit
  */
@@ -150,13 +156,13 @@ void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
 /*
  * Calculate next board state
  */
-board_t nextState(board_t board, int size) {
-    board_t nBoard = allocArray(size);
-
-    calculateState(board, nBoard);
-
-    freeArray(board);
-    return nBoard;
+void updateState(game_state_t* state) {
+    calculateState(state->currBoard, state->nextBoard);
+    
+    board_t tmp = state->currBoard;
+    state->currBoard = state->nextBoard;
+    state->nextBoard = tmp;
+    state->generation += 1;
 }
 
 int main(int argc, char** argv) {
@@ -169,24 +175,25 @@ int main(int argc, char** argv) {
     manageArguments(argc, argv, &size, &file, &random);
 
     // Create board
-    board_t board = getBoard(file, &size);
+    board_t board1 = getBoard(file, &size);
+    board_t board2 = allocArray(size);
     initScreen(size);
     if (random > 0) {
-        randomBoard(board, random);
+        randomBoard(board1, random);
     }
+    game_state_t state = { board1, board2, 0 };
     
     // Main loop
     int quit = 0;
     int running = 0;
     int elapsed = 0;
     int wait = 500;
-    int generation = 0;
     SDL_Event event;
     int mouseDown = 0;
     int keyDown = 0;
 
-    updateScreen(board);
-    updateTexts(running, wait, generation);
+    updateScreen(state.currBoard);
+    updateTexts(running, wait, state.generation);
 
     while (!quit) {
         Uint32 tmpTicks = SDL_GetTicks();
@@ -202,12 +209,13 @@ int main(int argc, char** argv) {
                     Point p = getPointFromScreen(event.button.x, event.button.y, size);
                     if (p.i == -2) {
                         // -2 is button pressed
-                        saveBoard(board, size);
+                        saveBoard(state.currBoard, size);
                     } else if (p.i > -1) {
-                        board.data[idx(p.i, p.j, size)] = !board.data[idx(p.i, p.j, size)];
+                        
+                        state.currBoard.data[idx(p.i, p.j, size)] = !state.currBoard.data[idx(p.i, p.j, size)];
                     }
-                    updateScreen(board);
-                    updateTexts(running, wait, generation);
+                    updateScreen(state.currBoard);
+                    updateTexts(running, wait, state.generation);
 
                     mouseDown = 1;
                 }
@@ -221,25 +229,24 @@ int main(int argc, char** argv) {
                     switch(event.key.keysym.sym) {
                         case SDLK_SPACE:
                             running = !running;
-                            updateTexts(running, wait, generation);
+                            updateTexts(running, wait, state.generation);
                             break;
                         case SDLK_UP:
                             wait /= 2;
                             if (wait < MIN_GEN_WAIT) {
                                 wait = MIN_GEN_WAIT;
                             }
-                            updateTexts(running, wait, generation);
+                            updateTexts(running, wait, state.generation);
                             break;
                         case SDLK_DOWN:
                             wait *= 2;
-                            updateTexts(running, wait, generation);
+                            updateTexts(running, wait, state.generation);
                             break;
                         case SDLK_RIGHT:
                             if (!running) {
-                                board = nextState(board, size);
-                                generation += 1;
-                                updateScreen(board);
-                                updateTexts(running, wait, generation);
+                                updateState(&state);
+                                updateScreen(state.currBoard);
+                                updateTexts(running, wait, state.generation);
                             }
                             break;
                         default:
@@ -256,10 +263,9 @@ int main(int argc, char** argv) {
 
         // Play life game
         if (running && elapsed >= wait && !quit) {
-            board = nextState(board, size);
-            generation += 1;
-            updateScreen(board);
-            updateTexts(running, wait, generation);
+            updateState(&state);
+            updateScreen(state.currBoard);
+            updateTexts(running, wait, state.generation);
 
             elapsed = 0;
         }
@@ -273,7 +279,8 @@ int main(int argc, char** argv) {
     }
 
     // Free all memory
-    freeArray(board);
+    freeArray(state.currBoard);
+    freeArray(state.nextBoard);
     closeScreen();
 
     exit(EXIT_SUCCESS);
