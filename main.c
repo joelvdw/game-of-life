@@ -37,7 +37,7 @@ SOFTWARE.
 #include "board.h"
 #include "automata.h"
 
-#define MAIN_WAIT 10
+#define MAIN_WAIT 5
 #define MIN_GEN_WAIT 16
 
 typedef struct game_state {
@@ -52,55 +52,6 @@ typedef struct game_state {
 void errorExit(char* msg) {
     printf("%s\n", msg);
     exit(EXIT_FAILURE);
-}
-
-/**
- * Randomly generate a part of a board
- * Range to generate : (initI -> initI+size; initJ -> initJ+size)
- */
-void randomBoardPart(board_t board, int initI, int initJ, int partSize) {
-    for (int i = initI; i < initI+partSize; i++) {
-        for (int j = initJ; j < initJ+partSize; j++) {
-            board.data[idx(i, j, board.size)] = rand()%2;
-        }
-    }
-}
-
-/**
- * Apply a vertical or horizontal symmetry on the middle of the board
- */
-void symmetryBoardPart(board_t board, int vertical) {
-    for (int i = 0; i < (vertical ? board.size/2 : board.size); i++) {
-        int nI =  (vertical ? board.size - i - 1 : i);
-        for (int j = 0; j < (vertical ? board.size : board.size/2); j++) {
-            int nJ =  (vertical ? j : board.size - j - 1);
-
-            board.data[idx(nI, nJ, board.size)] = board.data[idx(i, j, board.size)];
-        }
-    }
-}
-
-/**
- * Fill the board with random values
- * rdmType : 1->full random, 2->vertical symm, 3->horizontal symm, 4->both symm
- */
-void randomBoard(board_t board, int rdmType) {
-    int size = board.size;
-    if (rdmType == 1) {
-        randomBoardPart(board, 0, 0, size);
-    } else {
-        randomBoardPart(board, 0, 0, size/2 + size%2);
-        if (rdmType == 2) {
-            randomBoardPart(board, 0, size/2+size%2, size/2);
-            symmetryBoardPart(board, 1);
-        } else if (rdmType == 3) {
-            randomBoardPart(board, size/2+size%2, 0, size/2);
-            symmetryBoardPart(board, 0);
-        } else {
-            symmetryBoardPart(board, 1);
-            symmetryBoardPart(board, 0);
-        }
-    }
 }
 
 /**
@@ -165,25 +116,7 @@ void updateState(game_state_t* state) {
     state->generation += 1;
 }
 
-int main(int argc, char** argv) {
-    srand(time(NULL));
-
-    int size = 0;
-    int random = 0;
-    char* file = "";
-
-    manageArguments(argc, argv, &size, &file, &random);
-
-    // Create board
-    board_t board1 = getBoard(file, &size);
-    board_t board2 = allocArray(size);
-    initScreen(size);
-    if (random > 0) {
-        randomBoard(board1, random);
-    }
-    game_state_t state = { board1, board2, 0 };
-    
-    // Main loop
+void guiLoop(game_state_t state) {
     int quit = 0;
     int running = 0;
     int elapsed = 0;
@@ -206,13 +139,13 @@ int main(int argc, char** argv) {
             case SDL_MOUSEBUTTONDOWN:
                 // Fill or empty a cell
                 if (!mouseDown && !running) {
-                    Point p = getPointFromScreen(event.button.x, event.button.y, size);
+                    Point p = getPointFromScreen(event.button.x, event.button.y, state.currBoard.size);
                     if (p.i == -2) {
                         // -2 is button pressed
-                        saveBoard(state.currBoard, size);
+                        saveBoard(state.currBoard, state.currBoard.size);
                     } else if (p.i > -1) {
                         
-                        state.currBoard.data[idx(p.i, p.j, size)] = !state.currBoard.data[idx(p.i, p.j, size)];
+                        state.currBoard.data[idx(p.i, p.j, state.currBoard.size)] = !state.currBoard.data[idx(p.i, p.j, state.currBoard.size)];
                     }
                     updateScreen(state.currBoard);
                     updateTexts(running, wait, state.generation);
@@ -277,10 +210,32 @@ int main(int argc, char** argv) {
         }
         elapsed += MAIN_WAIT;
     }
+}
+
+int main(int argc, char** argv) {
+    srand(time(NULL));
+
+    int size = 0;
+    int random = 0;
+    char* file = "";
+
+    manageArguments(argc, argv, &size, &file, &random);
+
+    // Create board
+    board_t board1 = getBoard(file, &size);
+    board_t board2 = allocBoard(size);
+    initScreen(size);
+    if (random > 0) {
+        randomBoard(board1, random);
+    }
+    game_state_t state = { board1, board2, 0 };
+    
+    // Main loop
+    guiLoop(state);
 
     // Free all memory
-    freeArray(state.currBoard);
-    freeArray(state.nextBoard);
+    freeBoard(state.currBoard);
+    freeBoard(state.nextBoard);
     closeScreen();
 
     exit(EXIT_SUCCESS);

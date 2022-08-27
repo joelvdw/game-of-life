@@ -45,11 +45,11 @@ int idx(int i, int j, int size);
 /*
  * Alocate memory for a flat 2d-array of size (size x size)
  */
-board_t allocArray(int size);
+board_t allocBoard(int size);
 /*
  * Free memory of a flat 2d-array
  */
-void freeArray(board_t array);
+void freeBoard(board_t array);
 /*
  * Generate the board with the given file
  * Board size can be given, 0 to doesn't set it
@@ -59,5 +59,22 @@ board_t getBoard(char* filename, int* size);
  * Save a board to a file
  */
 void saveBoard(board_t board, int size);
+
+/**
+ * Randomly generate a part of a board
+ * Range to generate : (initI -> initI+size; initJ -> initJ+size)
+ */
+void randomBoardPart(board_t board, int initI, int initJ, int partSize);
+
+/**
+ * Apply a vertical or horizontal symmetry on the middle of the board
+ */
+void symmetryBoardPart(board_t board, int vertical);
+
+/**
+ * Fill the board with random values
+ * rdmType : 1->full random, 2->vertical symm, 3->horizontal symm, 4->both symm
+ */
+void randomBoard(board_t board, int rdmType);
 
 #endif

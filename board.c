@@ -47,7 +47,7 @@ int idx(int i, int j, int size) {
 /*
  * Alocate memory for a board of size (size x size)
  */
-board_t allocArray(int size) {
+board_t allocBoard(int size) {
     board_t board;
     board.size = size;
     board.data = calloc(sizeof(char), size * size);
@@ -59,8 +59,8 @@ board_t allocArray(int size) {
 /*
  * Free memory of a board
  */
-void freeArray(board_t array) {
-    free(array.data);
+void freeBoard(board_t board) {
+    free(board.data);
 }
 
 /*
@@ -86,7 +86,7 @@ board_t getBoard(char* filename, int* size) {
             *size = MIN_SIZE;
         }
     
-        board = allocArray(*size);
+        board = allocBoard(*size);
 
         // Fill the board with the file content
         int i = 0;
@@ -115,7 +115,7 @@ board_t getBoard(char* filename, int* size) {
         if (*size == 0) {
             *size = DEFAULT_SIZE;
         }
-        board = allocArray(*size);
+        board = allocBoard(*size);
     }
 
     return board;
@@ -146,4 +146,54 @@ void saveBoard(board_t board, int size) {
     }
 
     fclose(file);
+}
+
+
+/**
+ * Randomly generate a part of a board
+ * Range to generate : (initI -> initI+size; initJ -> initJ+size)
+ */
+void randomBoardPart(board_t board, int initI, int initJ, int partSize) {
+    for (int i = initI; i < initI+partSize; i++) {
+        for (int j = initJ; j < initJ+partSize; j++) {
+            board.data[idx(i, j, board.size)] = rand()%2;
+        }
+    }
+}
+
+/**
+ * Apply a vertical or horizontal symmetry on the middle of the board
+ */
+void symmetryBoardPart(board_t board, int vertical) {
+    for (int i = 0; i < (vertical ? board.size/2 : board.size); i++) {
+        int nI =  (vertical ? board.size - i - 1 : i);
+        for (int j = 0; j < (vertical ? board.size : board.size/2); j++) {
+            int nJ =  (vertical ? j : board.size - j - 1);
+
+            board.data[idx(nI, nJ, board.size)] = board.data[idx(i, j, board.size)];
+        }
+    }
+}
+
+/**
+ * Fill the board with random values
+ * rdmType : 1->full random, 2->vertical symm, 3->horizontal symm, 4->both symm
+ */
+void randomBoard(board_t board, int rdmType) {
+    int size = board.size;
+    if (rdmType == 1) {
+        randomBoardPart(board, 0, 0, size);
+    } else {
+        randomBoardPart(board, 0, 0, size/2 + size%2);
+        if (rdmType == 2) {
+            randomBoardPart(board, 0, size/2+size%2, size/2);
+            symmetryBoardPart(board, 1);
+        } else if (rdmType == 3) {
+            randomBoardPart(board, size/2+size%2, 0, size/2);
+            symmetryBoardPart(board, 0);
+        } else {
+            symmetryBoardPart(board, 1);
+            symmetryBoardPart(board, 0);
+        }
+    }
 }
