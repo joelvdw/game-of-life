@@ -30,8 +30,10 @@ SOFTWARE.
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <float.h>
 #include <SDL/SDL.h>
 #include "display.h"
 #include "board.h"
@@ -57,10 +59,10 @@ void errorExit(char* msg) {
 /**
  * Manage arguments
  */
-void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
+void manageArguments(int argc, char** argv, int* size, char** file, int* rand, int* performance) {
     if (argc != 1 && argc != 3 && argc != 5 && argc != 7) {
         // Show help
-        printf("Usage : lifegame [-h] [-n <size>] [-f <file>] [-r <type>]\n");
+        printf("Usage : lifegame [-h] [-n <size>] [-f <file>] [-r <type>] [-p]\n");
         printf("         -h          Display this help page\n");
         printf("         -f <file>   Load a board from a file\n");
         printf("                     The first line must be the board size\n");
@@ -70,6 +72,7 @@ void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
         printf("                             2 - Random with a vertical symmetry\n");
         printf("                             3 - Random with a horizontal symmetry\n");
         printf("                             4 - Random with both symmetries\n");
+        printf("         -p <n>      Run a performance test during n generations, without GUI\n");
         exit(EXIT_SUCCESS);
     }
 
@@ -97,6 +100,17 @@ void manageArguments(int argc, char** argv, int* size, char** file, int* rand) {
         else if (!strcmp(argv[i], "-r")) {
             if (i+1 < argc) {
                 *rand = atoi(argv[i+1]);
+            } else {
+                errorExit("Invalid arguments");
+            }
+        }
+        // performance
+        else if (!strcmp(argv[i], "-p")) {
+            if (i+1 < argc) {
+                *performance = atoi(argv[i+1]);
+                if (*performance <= 0) {
+                    errorExit("Invalid arguments");
+                }
             } else {
                 errorExit("Invalid arguments");
             }
@@ -212,31 +226,64 @@ void guiLoop(game_state_t state) {
     }
 }
 
+void perfLoop(game_state_t state, int maxGen) {
+    double totalDur = 0;
+    double minDur = DBL_MAX;
+    double maxDur = DBL_MIN;
+
+    while (state.generation < maxGen) {
+        clock_t t;
+        t = clock();
+
+        updateState(&state);
+
+        t = clock() - t;
+        double dur = ((double)t)/(CLOCKS_PER_SEC/1000.0);
+        totalDur += dur;
+        maxDur = (dur > maxDur ? dur : maxDur);
+        minDur = (dur < minDur ? dur : minDur);
+
+        if (state.generation == 1 || state.generation % 1000 == 0 || state.generation == maxGen) {
+            printf("\rGen: %d/%d, last: %.4fms, avg: %.4fms, min: %.4fms, max: %.4fms    ", state.generation, maxGen, dur, totalDur/state.generation, minDur, maxDur);
+            fflush(stdout);
+        }
+    }
+
+    printf("\n");
+}
+
 int main(int argc, char** argv) {
     srand(time(NULL));
 
     int size = 0;
     int random = 0;
+    int performance = 0;
     char* file = "";
 
-    manageArguments(argc, argv, &size, &file, &random);
+    manageArguments(argc, argv, &size, &file, &random, &performance);
 
     // Create board
     board_t board1 = getBoard(file, &size);
     board_t board2 = allocBoard(size);
-    initScreen(size);
     if (random > 0) {
         randomBoard(board1, random);
     }
     game_state_t state = { board1, board2, 0 };
     
-    // Main loop
-    guiLoop(state);
+    if (performance == 0) {
+        initScreen(size);
+
+        // Main loop
+        guiLoop(state);
+
+        closeScreen();
+    } else {
+        perfLoop(state, performance);
+    }
 
     // Free all memory
     freeBoard(state.currBoard);
     freeBoard(state.nextBoard);
-    closeScreen();
 
     exit(EXIT_SUCCESS);
 }

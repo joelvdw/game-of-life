@@ -76,40 +76,40 @@ board_t getBoard(char* filename, int* size) {
 
         // Get size from the first line
         char line[10];
-        fgets(line, 10, file);
-        line[strlen(line)-1] = 0;
+        if (fgets(line, 10, file) != NULL) {
+            line[strlen(line)-1] = 0;
 
-        if (*size == 0) {
-            *size = atoi(line);
-        }
-        if (*size < MIN_SIZE) {
-            *size = MIN_SIZE;
-        }
-    
-        board = allocBoard(*size);
+            if (*size == 0) {
+                *size = atoi(line);
+            }
+            if (*size < MIN_SIZE) {
+                *size = MIN_SIZE;
+            }
+        
+            board = allocBoard(*size);
 
-        // Fill the board with the file content
-        int i = 0;
-        int j = 0;
-        char c = 0;
-        while((c = fgetc(file)) != EOF) {
-            if (c == '\n') {
-                i += 1;
-                j = 0;
-                if (i == *size) {
-                    break;
+            // Fill the board with the file content
+            int i = 0;
+            int j = 0;
+            char c = 0;
+            while((c = fgetc(file)) != EOF) {
+                if (c == '\n') {
+                    i += 1;
+                    j = 0;
+                    if (i == *size) {
+                        break;
+                    }
+                } else if (j < *size) {
+                    if (c == '0') {
+                        board.data[idx(i, j, *size)] = 0;
+                    } else {
+                        board.data[idx(i, j, *size)] = 1;
+                    }
+
+                    j += 1;
                 }
-            } else if (j < *size) {
-                if (c == '0') {
-                    board.data[idx(i, j, *size)] = 0;
-                } else {
-                    board.data[idx(i, j, *size)] = 1;
-                }
-
-                j += 1;
             }
         }
-    
         fclose(file);
     } else {
         if (*size == 0) {
