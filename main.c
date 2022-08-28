@@ -32,6 +32,7 @@ SOFTWARE.
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/time.h>
 #include <time.h>
 #include <float.h>
 #include <SDL/SDL.h>
@@ -230,26 +231,29 @@ void perfLoop(game_state_t state, int maxGen) {
     double totalDur = 0;
     double minDur = DBL_MAX;
     double maxDur = DBL_MIN;
+    struct timeval begin, end;
 
     while (state.generation < maxGen) {
-        clock_t t;
-        t = clock();
+        gettimeofday(&begin, 0);
 
         updateState(&state);
 
-        t = clock() - t;
-        double dur = ((double)t)/(CLOCKS_PER_SEC/1000.0);
+        gettimeofday(&end, 0);
+        long s = end.tv_sec - begin.tv_sec;
+        long micro = end.tv_usec - begin.tv_usec;
+        double dur = s*1e+3 + micro*1e-3;
+
         totalDur += dur;
         maxDur = (dur > maxDur ? dur : maxDur);
         minDur = (dur < minDur ? dur : minDur);
 
-        if (state.generation == 1 || state.generation % 1000 == 0 || state.generation == maxGen) {
-            printf("\rGen: %d/%d, last: %.4fms, avg: %.4fms, min: %.4fms, max: %.4fms    ", state.generation, maxGen, dur, totalDur/state.generation, minDur, maxDur);
+        if (state.generation == 1 || state.generation % 100 == 0 || state.generation == maxGen) {
+            printf("\rGen: %d/%d, last: %.4f ms, avg: %.4f ms, min: %.4f ms, max: %.4f ms    ", state.generation, maxGen, dur, totalDur/state.generation, minDur, maxDur);
             fflush(stdout);
         }
     }
 
-    printf("\n");
+    printf("\nTotal calculation duration: %f s\n", totalDur*1e-3);
 }
 
 int main(int argc, char** argv) {
